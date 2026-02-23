@@ -1,35 +1,38 @@
 import sys, pygame
-
+from datetime import datetime
 pygame.init()
 
-WIDTH, HEIGHT = 240, 320
+from core.constants import WIDTH, HEIGHT, FPS
+from core import assets
+assets.load()
+
+from core import ScreenManager
+from screens import HomeScreen
+
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 CLOCK = pygame.time.Clock()
 
-BG = pygame.image.load("assets/background.png")
-BG_POS = BG.get_rect(center=(WIDTH/2, HEIGHT/2))
-
-FONT = pygame.font.Font("assets/IS-Reg.ttf", 30)
-
-labels = ["ALARM", "POMODORO", "MUSIC"]
-rendered_texts = [FONT.render(text, True, "white") for text in labels]
-
-total_height = sum(t.get_height() for t in rendered_texts) + (15 * (len(labels) - 1))
+manager = ScreenManager()
+manager.go_to(HomeScreen(manager))
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        manager.handle_event(event)
 
-    SCREEN.blit(BG, BG_POS)
-    current_y = (HEIGHT - total_height) // 2
+    manager.update()
+    manager.draw(SCREEN)
 
-    for surface in rendered_texts:
-        x_pos = (WIDTH - surface.get_width()) // 2
-        SCREEN.blit(surface, (x_pos, current_y))
-        current_y += surface.get_height() + 15
+    current_time = datetime.now().strftime("%I:%M %p")
+    rendered_time = assets.FONT_R_M.render(current_time, True, "white")
+    time_pos_w = WIDTH - rendered_time.get_width() // 2 - 5
+    time_pos_h = rendered_time.get_height() // 2
+    time_rect = rendered_time.get_rect(center=(time_pos_w, time_pos_h))
+
+    SCREEN.blit(rendered_time, time_rect)
 
     pygame.display.flip()
 
-    CLOCK.tick(60)
+    CLOCK.tick(FPS)
